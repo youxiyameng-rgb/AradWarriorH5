@@ -46,6 +46,8 @@ class MainActivity : AppCompatActivity() {
                 javaScriptEnabled = true
                 domStorageEnabled = true
                 allowFileAccess = true
+                allowFileAccessFromFileURLs = true
+                allowUniversalAccessFromFileURLs = true
                 allowContentAccess = true
                 cacheMode = WebSettings.LOAD_NO_CACHE
             }
