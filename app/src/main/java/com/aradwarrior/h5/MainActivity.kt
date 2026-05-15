@@ -34,7 +34,7 @@ class MainActivity : AppCompatActivity() {
             webChromeClient = WebChromeClient()
             loadUrl("file:///android_asset/game/index.html")
         }
-        layout.addView(webView, FrameLayout.LayoutParams(MATCH_PARENT, MATCH_PARENT))
+        layout.addView(webView, FrameLayout.LayoutParams(FrameLayout.LayoutParams.MATCH_PARENT, FrameLayout.LayoutParams.MATCH_PARENT))
         val gmBtn = Button(this).apply {
             text = "GM"; setTextColor(Color.WHITE)
             setBackgroundColor(Color.argb(180, 255, 0, 0)); textSize = 12f; gravity = Gravity.CENTER
