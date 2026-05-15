@@ -46,19 +46,8 @@ class MainActivity : AppCompatActivity() {
                 javaScriptEnabled = true
                 domStorageEnabled = true
                 allowFileAccess = true
-                allowFileAccessFromFileURLs = true
-                allowUniversalAccessFromFileURLs = true
                 allowContentAccess = true
                 cacheMode = WebSettings.LOAD_NO_CACHE
-                setAppCacheEnabled(true)
-                databaseEnabled = true
-                useWideViewPort = true
-                loadWithOverviewMode = true
-                builtInZoomControls = false
-                displayZoomControls = false
-                layoutAlgorithm = WebSettings.LayoutAlgorithm.NARROW_COLUMNS
-                mediaPlaybackRequiresUserGesture = false
-                mixedContentMode = WebSettings.MIXED_CONTENT_ALWAYS_ALLOW
             }
 
             // 注入 GM 接口
