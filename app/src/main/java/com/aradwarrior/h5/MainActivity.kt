@@ -12,13 +12,11 @@ import android.webkit.WebView
 import android.webkit.WebViewClient
 import android.widget.Button
 import android.widget.FrameLayout
-import android.widget.Toast
 import androidx.appcompat.app.AppCompatActivity
 
 class MainActivity : AppCompatActivity() {
 
     private lateinit var webView: WebView
-    private var gmVisible = false
 
     @SuppressLint("SetJavaScriptEnabled", "AddJavascriptInterface")
     override fun onCreate(savedInstanceState: Bundle?) {
@@ -45,9 +43,28 @@ class MainActivity : AppCompatActivity() {
                 cacheMode = WebSettings.LOAD_NO_CACHE
             }
 
-            addJavascriptInterface(GMInterface(this@MainActivity), "GM")
+            addJavascriptInterface(object {
+                @JavascriptInterface
+                fun doAction(action: String) {
+                    runOnUiThread {
+                        val title = when (action) {
+                            "level" -> "✨ 等级已设为 999"
+                            "gold" -> "💰 获得金币 99999"
+                            "diamond" -> "💎 获得钻石 99999"
+                            "unlock" -> "🔓 已解锁全部内容"
+                            else -> action
+                        }
+                        webView.evaluateJavascript("alert('$title');", null)
+                    }
+                }
+            }, "_GM")
 
-            webViewClient = WebViewClient()
+            webViewClient = object : WebViewClient() {
+                override fun onPageFinished(view: WebView?, url: String?) {
+                    super.onPageFinished(view, url)
+                    injectGM()
+                }
+            }
             webChromeClient = WebChromeClient()
 
             loadUrl("file:///android_asset/game/index.html")
@@ -55,14 +72,13 @@ class MainActivity : AppCompatActivity() {
 
         layout.addView(webView, FrameLayout.LayoutParams.MATCH_PARENT, FrameLayout.LayoutParams.MATCH_PARENT)
 
-        // 悬浮 GM 按钮
         val gmBtn = Button(this).apply {
             text = "GM"
             setTextColor(Color.WHITE)
             setBackgroundColor(Color.argb(180, 255, 0, 0))
             textSize = 12f
             gravity = Gravity.CENTER
-            setOnClickListener { toggleGMPanel() }
+            setOnClickListener { toggleGM() }
         }
         val btnParams = FrameLayout.LayoutParams(140, 100)
         btnParams.gravity = Gravity.TOP or Gravity.END
@@ -70,63 +86,33 @@ class MainActivity : AppCompatActivity() {
         layout.addView(gmBtn, btnParams)
     }
 
-    private fun toggleGMPanel() {
-        gmVisible = !gmVisible
-        val action = if (gmVisible) "block" else "none"
-
+    private fun injectGM() {
         webView.evaluateJavascript("""
-            (function() {
-                var panel = document.getElementById('gm-panel');
-                if (!panel) {
-                    panel = document.createElement('div');
-                    panel.id = 'gm-panel';
-                    panel.style.cssText = 'position:fixed;top:60px;right:20px;width:260px;background:rgba(0,0,0,0.95);color:white;padding:15px;border-radius:8px;z-index:9999;font-size:12px;display:none;box-shadow:0 0 10px rgba(0,0,0,0.5);max-height:80vh;overflow-y:auto;';
-                    panel.innerHTML = [
-                        '<h3 style="margin:0 0 10px 0;border-bottom:1px solid #555;padding-bottom:5px;font-size:14px;">🔥 GM 控制台</h3>',
-                        '<div style="display:grid;grid-template-columns:1fr 1fr;gap:5px;">',
-                        '<button onclick="GM.setLevel(999)" style="background:#d32f2f;color:white;border:none;padding:8px;border-radius:4px;font-size:12px;cursor:pointer;">等级 999</button>',
-                        '<button onclick="GM.setGold(99999)" style="background:#f57c00;color:white;border:none;padding:8px;border-radius:4px;font-size:12px;cursor:pointer;">金币 +9w</button>',
-                        '<button onclick="GM.setDiamond(99999)" style="background:#1565c0;color:white;border:none;padding:8px;border-radius:4px;font-size:12px;cursor:pointer;">钻石 +9w</button>',
-                        '<button onclick="GM.unlockAll()" style="background:#7b1fa2;color:white;border:none;padding:8px;border-radius:4px;font-size:12px;cursor:pointer;">解锁全部</button>',
-                        '</div>',
-                        '<button onclick="document.getElementById(\'gm-panel\').style.display=\'none\'" style="width:100%;margin-top:10px;background:#555;color:white;border:none;padding:8px;border-radius:4px;font-size:12px;cursor:pointer;">关闭</button>'
-                    ].join('\n');
-                    document.body.appendChild(panel);
+            window.gmToggle = function() { _GM.doAction('toggle'); };
+            window.GM = {
+                show: function() {
+                    var p = document.getElementById('gmp');
+                    if(!p) {
+                        p = document.createElement('div');
+                        p.id = 'gmp';
+                        p.style.cssText = 'position:fixed;top:60px;right:20px;width:260px;background:rgba(0,0,0,0.95);color:#fff;padding:15px;border-radius:8px;z-index:99999;font-size:12px;box-shadow:0 0 10px rgba(0,0,0,0.5);max-height:80vh;overflow-y:auto;';
+                        p.innerHTML = '<h3 style="margin:0 0 10px;border-bottom:1px solid #555;padding-bottom:5px;font-size:14px;">🔥 GM 控制台</h3>'+
+                            '<div style="display:grid;grid-template-columns:1fr 1fr;gap:5px">'+
+                            '<button onclick="_GM.doAction(\'level\')" style="background:#d32f2f;color:#fff;border:none;padding:8px;border-radius:4px;font-size:12px">等级 999</button>'+
+                            '<button onclick="_GM.doAction(\'gold\')" style="background:#f57c00;color:#fff;border:none;padding:8px;border-radius:4px;font-size:12px">金币 +9w</button>'+
+                            '<button onclick="_GM.doAction(\'diamond\')" style="background:#1565c0;color:#fff;border:none;padding:8px;border-radius:4px;font-size:12px">钻石 +9w</button>'+
+                            '<button onclick="_GM.doAction(\'unlock\')" style="background:#7b1fa2;color:#fff;border:none;padding:8px;border-radius:4px;font-size:12px">解锁全部</button>'+
+                            '</div>'+
+                            '<button onclick="document.getElementById(\'gmp\').style.display=\'none\'" style="width:100%;margin-top:10px;background:#555;color:#fff;border:none;padding:8px;border-radius:4px;font-size:12px">关闭</button>';
+                        document.body.appendChild(p);
+                    }
+                    p.style.display = p.style.display==='none'?'block':'none';
                 }
-                panel.style.display = '$action';
-            })()
+            };
         """.trimIndent(), null)
     }
 
-    class GMInterface(private val activity: MainActivity) {
-        private fun exec(js: String) {
-            activity.runOnUiThread {
-                activity.webView.evaluateJavascript(js, null)
-            }
-        }
-
-        @JavascriptInterface
-        fun setLevel(level: Int) {
-            exec("alert('✨ 等级已设为 " + level + "！');")
-            Toast.makeText(activity, "GM: 等级已设为 " + level, Toast.LENGTH_SHORT).show()
-        }
-
-        @JavascriptInterface
-        fun setGold(gold: Int) {
-            exec("alert('💰 获得金币 " + gold + "！');")
-            Toast.makeText(activity, "GM: 添加金币 " + gold, Toast.LENGTH_SHORT).show()
-        }
-
-        @JavascriptInterface
-        fun setDiamond(count: Int) {
-            exec("alert('💎 获得钻石 " + count + "！');")
-            Toast.makeText(activity, "GM: 添加钻石 " + count, Toast.LENGTH_SHORT).show()
-        }
-
-        @JavascriptInterface
-        fun unlockAll() {
-            exec("alert('🔓 已解锁全部内容！');")
-            Toast.makeText(activity, "GM: 已解锁全部", Toast.LENGTH_SHORT).show()
-        }
+    private fun toggleGM() {
+        webView.evaluateJavascript("window.GM&&GM.show();", null)
     }
 }
