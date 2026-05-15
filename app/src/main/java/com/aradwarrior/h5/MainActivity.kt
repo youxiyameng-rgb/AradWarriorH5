@@ -52,9 +52,7 @@ class MainActivity : AppCompatActivity() {
         js("""
 (function(){
 if(!window._gm){
-var store = (typeof cc!='undefined'&&cc.sys&&cc.sys.localStorage)?cc.sys.localStorage:window.localStorage;
-function get(k,d){try{return JSON.parse(store.getItem(k))||d}catch(e){return store.getItem(k)||d}}
-function set(k,v){try{store.setItem(k,typeof v=='string'?v:JSON.stringify(v))}catch(e){}}
+function getDM(){try{for(var k in window){if(window[k]&&window[k].CommonDataMgr)return window[k].CommonDataMgr.instance}for(var k in window){var v=window[k];if(v&&v.instance&&v.instance.Gold!==undefined)return v.instance}}catch(e){}return null}
 var div=document.createElement('div');
 div.id='_gmp';
 div.style.cssText='position:fixed;top:60px;right:10px;width:260px;background:rgba(0,0,0,0.95);color:white;padding:12px;border-radius:8px;z-index:99999;font-size:13px;max-height:85vh;overflow-y:auto;display:none';
@@ -62,6 +60,11 @@ var title=document.createElement('div');
 title.style.cssText='margin-bottom:8px;padding-bottom:6px;border-bottom:1px solid #555;font-size:15px;font-weight:bold;color:#ff6b6b';
 title.textContent='GM CONTROL';
 div.appendChild(title);
+var info=document.createElement('div');
+info.id='gmstat';
+info.style.cssText='margin-bottom:8px;font-size:11px;color:#aaa;line-height:1.5';
+info.textContent='loading...';
+div.appendChild(info);
 var btns=[['Level +1','level'],['Gold +1w','gold'],['Diamond +1w','diamond'],['Drop +10%','drop'],['Get Equip','equip'],['Unlock All','unlock']];
 var colors=['#e74c3c','#e67e22','#2980b9','#27ae60','#8e44ad','#2c3e50'];
 btns.forEach(function(b,i){
@@ -70,13 +73,32 @@ btn.textContent=b[0];
 btn.style.cssText='display:block;width:100%;margin:4px 0;background:'+colors[i]+';color:white;border:none;padding:10px;border-radius:6px;font-size:13px';
 btn.onclick=function(){
 var cmd=b[1];
-if(cmd=='level'){var l=parseInt(get('player_level',0));set('player_level',l+1);alert('Level: '+(l+1))}
-else if(cmd=='gold'){var n=parseInt(get('player_gold',0));set('player_gold',n+10000);alert('Gold: '+(n+10000))}
-else if(cmd=='diamond'){var n=parseInt(get('player_diamond',0));set('player_diamond',n+10000);alert('Diamond: '+(n+10000))}
-else if(cmd=='drop'){var r=parseFloat(get('drop_rate',0));set('drop_rate',Math.min(r+0.1,1.0));alert('Drop: '+((r+0.1)*100).toFixed(0)+'%')}
-else if(cmd=='equip'){var items=['Epic Sword','Legend Armor','Mythic Ring'];var item=items[Math.floor(Math.random()*items.length)];var inv=get('player_inventory',[]);inv.push({name:item});set('player_inventory',inv);alert('Got: '+item)}
-else if(cmd=='unlock'){set('unlocked_stages',[1,2,3,4,5,6,7,8,9,10]);set('unlocked_skills','all');alert('Unlocked All!')}
-};
+var dm=getDM();
+if(!dm){alert('DataMgr not found');return}
+if(cmd=='level'){dm.Level=dm.Level||0;dm.Level++;alert('Level: '+dm.Level)}
+else if(cmd=='gold'){dm.Gold=dm.Gold||0;dm.Gold+=10000;alert('Gold: '+dm.Gold)}
+else if(cmd=='diamond'){dm.Diamond=dm.Diamond||0;dm.Diamond+=10000;alert('Diamond: '+dm.Diamond)}
+else if(cmd=='drop'){dm.DropRate=Math.min((dm.DropRate||0)+0.1,1);alert('Drop: '+((dm.DropRate)*100).toFixed(0)+'%')}
+else if(cmd=='equip'){var items=['Epic Sword','Legend Armor','Mythic Ring'];var item=items[Math.floor(Math.random()*items.length)];dm.Inventory=dm.Inventory||[];dm.Inventory.push({name:item});alert('Got: '+item)}
+else if(cmd=='unlock'){dm.Unlocked=dm.Unlocked||{};for(var i=1;i<=10;i++)dm.Unlocked[i]=true;alert('Unlocked All!')}
+refreshStat()};
+div.appendChild(btn);
+});
+function refreshStat(){
+var el=document.getElementById('gmstat');
+var dm=getDM();
+if(!el)return;
+if(!dm){el.textContent='DataMgr not found - try playing a level first!';return}
+el.innerHTML='Gold: '+(dm.Gold||0)+'<br>Diamond: '+(dm.Diamond||0)+'<br>Level: '+(dm.Level||0)+'<br>Drop: '+((dm.DropRate||0)*100).toFixed(0)+'%';
+}
+var closeBtn=document.createElement('button');
+closeBtn.textContent='Close';
+closeBtn.style.cssText='display:block;width:100%;margin-top:8px;background:#555;color:white;border:none;padding:8px;border-radius:6px;font-size:12px';
+closeBtn.onclick=function(){div.style.display='none'};
+div.appendChild(closeBtn);
+document.body.appendChild(div);
+window._gm=div;
+refreshStat();
 div.appendChild(btn);
 });
 var closeBtn=document.createElement('button');
