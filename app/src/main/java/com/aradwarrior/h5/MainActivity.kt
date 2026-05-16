@@ -52,7 +52,7 @@ class MainActivity : AppCompatActivity() {
         js("""
 (function(){
 if(!window._gm){
-function getDM(){try{for(var k in window){if(window[k]&&window[k].CommonDataMgr)return window[k].CommonDataMgr.instance}for(var k in window){var v=window[k];if(v&&v.instance&&v.instance.Gold!==undefined)return v.instance}}catch(e){}return null}
+var dm=window.CommonDataMgr||null;
 var div=document.createElement('div');
 div.id='_gmp';
 div.style.cssText='position:fixed;top:60px;right:10px;width:260px;background:rgba(0,0,0,0.95);color:white;padding:12px;border-radius:8px;z-index:99999;font-size:13px;max-height:85vh;overflow-y:auto;display:none';
@@ -73,23 +73,22 @@ btn.textContent=b[0];
 btn.style.cssText='display:block;width:100%;margin:4px 0;background:'+colors[i]+';color:white;border:none;padding:10px;border-radius:6px;font-size:13px';
 btn.onclick=function(){
 var cmd=b[1];
-var dm=getDM();
-if(!dm){alert('DataMgr not found');return}
-if(cmd=='level'){dm.Level=dm.Level||0;dm.Level++;alert('Level: '+dm.Level)}
-else if(cmd=='gold'){dm.Gold=dm.Gold||0;dm.Gold+=10000;alert('Gold: '+dm.Gold)}
-else if(cmd=='diamond'){dm.Diamond=dm.Diamond||0;dm.Diamond+=10000;alert('Diamond: '+dm.Diamond)}
-else if(cmd=='drop'){dm.DropRate=Math.min((dm.DropRate||0)+0.1,1);alert('Drop: '+((dm.DropRate)*100).toFixed(0)+'%')}
-else if(cmd=='equip'){var items=['Epic Sword','Legend Armor','Mythic Ring'];var item=items[Math.floor(Math.random()*items.length)];dm.Inventory=dm.Inventory||[];dm.Inventory.push({name:item});alert('Got: '+item)}
-else if(cmd=='unlock'){dm.Unlocked=dm.Unlocked||{};for(var i=1;i<=10;i++)dm.Unlocked[i]=true;alert('Unlocked All!')}
+if(!dm){alert('DataMgr not found - play a level first!');return}
+if(cmd=='level'){dm.Level=(dm.Level||0)+1;alert('Level: '+dm.Level)}
+else if(cmd=='gold'){dm.Gold=(dm.Gold||0)+10000;alert('Gold: '+dm.Gold)}
+else if(cmd=='diamond'){dm.Diamond=(dm.Diamond||0)+10000;alert('Diamond: '+dm.Diamond)}
+else if(cmd=='drop'){dm.Poewrpoewr=(dm.Poewrpoewr||0)+10;alert('Power +10')}
+else if(cmd=='equip'){alert('Equipment system not modded')}
+else if(cmd=='unlock'){alert('Unlock needs server data')}
 refreshStat()};
 div.appendChild(btn);
 });
 function refreshStat(){
 var el=document.getElementById('gmstat');
-var dm=getDM();
+var d=window.CommonDataMgr;
 if(!el)return;
-if(!dm){el.textContent='DataMgr not found - try playing a level first!';return}
-el.innerHTML='Gold: '+(dm.Gold||0)+'<br>Diamond: '+(dm.Diamond||0)+'<br>Level: '+(dm.Level||0)+'<br>Drop: '+((dm.DropRate||0)*100).toFixed(0)+'%';
+if(!d){el.textContent='DataMgr not found - try playing a level first!';return}
+el.innerHTML='Gold: '+(d.Gold||0)+'<br>Diamond: '+(d.Diamond||0)+'<br>Level: '+(d.Level||0)+'<br>Power: '+(d.Poewrpoewr||0)+'<br>Extra: '+(d.Extrapoewr||0)+'<br>Revive: '+(d.ReviveCoin||0);
 }
 var closeBtn=document.createElement('button');
 closeBtn.textContent='Close';
